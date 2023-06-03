@@ -7,6 +7,8 @@ class context {
     static themeManager;
     /** @type {InfiniteScrolling} */
     static infiniteScrolling;
+    /** @type {AutocompleteManager} */
+    static autocompleteManager;
     /** 
      * @see {utils.pageTypes}
      * @type {string} */

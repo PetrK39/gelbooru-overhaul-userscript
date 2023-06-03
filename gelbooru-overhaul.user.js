@@ -20,6 +20,7 @@
 // @require     https://github.com/Enchoseon/gelbooru-overhaul-userscript/raw/main/resources/gelbooru-overhaul.themeManager.js
 // @require     https://github.com/Enchoseon/gelbooru-overhaul-userscript/raw/main/resources/gelbooru-overhaul.blacklistManager.js
 // @require     https://github.com/Enchoseon/gelbooru-overhaul-userscript/raw/main/resources/gelbooru-overhaul.infiniteScrolling.js
+// @require     https://github.com/Enchoseon/gelbooru-overhaul-userscript/raw/main/resources/gelbooru-overhaul.autocompleteManager.js
 // ==/UserScript==
 
 (function () {
@@ -46,6 +47,9 @@
 
         let infiniteScrolling = new InfiniteScrolling();
         context.infiniteScrolling = infiniteScrolling;
+
+        let autocompleteManager = new AutocompleteManager();
+        context.autocompleteManager = autocompleteManager;
 
         configManager.addUpdateListener("advancedBlacklist.enable", applyTweakAdvancedBlacklist);
         configManager.addUpdateListener("advancedBlacklist.hideMode", applyCssVariableBlacklist);
@@ -85,6 +89,9 @@
         configManager.addUpdateListener("infiniteScroll.goToTop", applyTweakGoToTop);
 
         configManager.addUpdateListener("darkMode.amoled", (v) => {themeManager.checkForThemeSwitch(v);});
+
+        configManager.addUpdateListener("autocomplete.enable", (v) => {autocompleteManager.setupManager(v);});
+        configManager.addUpdateListener("autocomplete.hotkey", (v) => {autocompleteManager.applyTweakHotkey(v);});
 
         infiniteScrolling.addUpdateListener(e => {
             applyTweakEnlargeOnHover(Boolean(configManager.findValueByKey("thumbs.enlargeOnHover")), e);

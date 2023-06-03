@@ -426,6 +426,26 @@ class ConfigManager {
                         description: "Display floating 'Go to top' button"
                     }
                 }
+            },
+            autocomplete: {
+                name: "Autocomplete",
+                items: {
+                    enable: {
+                        value: true,
+                        name: "Enable",
+                        description: "Enable autocompletion features and tweaks"
+                    },
+                    hotkey: {
+                        value: true,
+                        name: "Hotkey for Searching",
+                        description: "Press \'/\' (Slash) key to jump to search field"
+                    },
+                    sidebar: {
+                        value: true,
+                        name: "Sidebar Tags Focusing Search Field",
+                        description: "Focus search field when tag added from sidebar"
+                    }
+                }
             }
         };
     }
@@ -470,7 +490,7 @@ class ConfigManager {
                 // migrate to keep old config
                 // migrate property values and NECESSARILY configVersion
                 migratedPrefs.general.items.configVersion.value = 1;
-
+ 
                 // transfer values (copy/to string/to number/change range/change units)
                 // you only care about .value OR changed category/item key
                 // names and descriptions do not need to be migrated
@@ -483,7 +503,7 @@ class ConfigManager {
             }
             // next migrate step here...
             if(migratedPrefs.general.items.configVersion.value == 1){}
-
+ 
             return {preferences: migratedPrefs, isShouldBeSaved: true};
             */
             throw new Error("There is no migrations yet. Something went wrong on packed config loading");
