@@ -1,3 +1,6 @@
+/**
+ * Global variable for storing the page context and *Manager references
+ */
 class context {
     /** @type {ConfigManager} */
     static configManager;
@@ -12,6 +15,7 @@ class context {
      * @type {string} */
     static pageType;
 }
+
 /**
  * @class Wrapper for Fetch method to make it more reliable
  * @link Inspired by (mostly borrowed) https://github.com/evan-liu/fetch-queue
@@ -25,16 +29,33 @@ class RepeatFetchQueue {
      * @property {string} State
      * @property {number} Retries
      */
-    ItemStates = { Pending: "Pending", Active: "Active", Succeeded: "Succeeded", Failed: "Failed" };
 
-    /** @type {number} */
+    /**
+     * Enum with possible Item states
+     * @private
+     */
+    ItemStates = Object.freeze({ Pending: "Pending", Active: "Active", Succeeded: "Succeeded", Failed: "Failed" });
+
+    /** 
+     * @type {number}
+     * @private
+     */
     parallelRequests;
-    /** @type {number} */
+    /** 
+     * @type {number}
+     * @private
+     */
     maxRetryCount;
 
-    /** @type {QueueItem[]} */
+    /** 
+     * @type {QueueItem[]} 
+     * @private
+     */
     pendingItems;
-    /** @type {QueueItem[]} */
+    /** 
+     * @type {QueueItem[]}
+     * @private
+     */
     activeItems;
 
     constructor(parallelRequests = 5, maxRetryCount = 5) {
@@ -70,6 +91,7 @@ class RepeatFetchQueue {
     }
 
     /**
+     * Main loop that handles all pending requests
      * @private
      */
     checkNext() {
@@ -92,6 +114,7 @@ class RepeatFetchQueue {
         }
     }
     /**
+     * Handle successful response
      * @private
      * @param {QueueItem} item
      * @param {string} state
@@ -110,7 +133,8 @@ class RepeatFetchQueue {
     }
 
     /**
-     * 
+     * Re-queue failed item
+     * @private
      * @param {QueueItem} item 
      * @param {any} reason 
      */
@@ -128,15 +152,16 @@ class RepeatFetchQueue {
         this.checkNext();
     }
 }
+
+/**
+ * @Class Unsorted collection of script-wide utilitarian functions
+ */
 class utils {
     /** @var {Object.<string, string>} Enum with available page types */
     static pageTypes = Object.freeze({ GALLERY: "gallery", POST: "post", WIKI_VIEW: "wiki_view", POOL_VIEW: "pool_view", UNDEFINED: "undefined" });
+
     /**
-     * Current page type (see {@link utils.pageTypes})
-     * @returns {string}
-     */
-    /**
-     * Runs func when document is ready
+     * Runs func when DOM is ready
      * @param {function} func 
     */
     static onDOMReady(func) {
@@ -146,26 +171,32 @@ class utils {
             document.addEventListener("DOMContentLoaded", () => func());
         }
     }
+
+    /**
+     * Extracts current page type from URL
+     * @returns {string} Page type 
+     * @see utils.pageTypes
+     */
     static getPageType() {
         let params = new URLSearchParams(document.URL.split('?')[1]);
 
-        if (!params.has("page"))
-            return utils.pageTypes.UNDEFINED;
+        let page = params.get("page");
+        let s = params.get("s");
 
-        if (params.get("page") == "post" && params.get("s") == "list")
-            return utils.pageTypes.GALLERY;
-
-        if (params.get("page") == "post" && params.get("s") == "view")
-            return utils.pageTypes.POST;
-
-        if (params.get("page") == "wiki" && params.get("s") == "view")
-            return utils.pageTypes.WIKI_VIEW;
-
-        if (params.get("page") == "pool" && params.get("s") == "show")
-            return utils.pageTypes.POOL_VIEW;
-
-        return utils.pageTypes.UNDEFINED;
+        switch (true) {
+            case (page == "post" && s == "list"):
+                return utils.pageTypes.GALLERY;
+            case (page == "post" && s == "view"):
+                return utils.pageTypes.POST;
+            case (page == "wiki" && s == "view"):
+                return utils.pageTypes.WIKI_VIEW;
+            case (page == "pool" && s == "show"):
+                return utils.pageTypes.POOL_VIEW;
+            default: 
+                return utils.pageTypes.UNDEFINED;
+        }
     }
+
     /**
      * Styled console.log()
      * @param {string=}  message
@@ -182,8 +213,9 @@ class utils {
                 console.log("[GELO]: " + message, value);
         }
     }
+
     /**
-     * Find path of diven property with given value in given object
+     * Find path of given property with given value in given object
      * @param {Object} obj 
      * @param {string} name 
      * @param {*} val 
@@ -211,6 +243,7 @@ class utils {
 
         return matchingPath;
     }
+
     /**
      * Recursive merge source into target—changes source.
      * @link https://gist.github.com/ahtcx/0cd94e62691f539160b32ecda18af3d6?permalink_comment_id=3889214#gistcomment-3889214
@@ -231,17 +264,19 @@ class utils {
         }
         return target; // we're replacing in-situ, so this is more for chaining than anything else
     }
+
     /**
      * Find property in object using string path
      * @param {string} path 
      * @param {Object} obj 
      * @param {string} separator 
-     * @returns 
+     * @returns {any}
      */
     static resolve(path, obj = self, separator = '.') {
         var properties = Array.isArray(path) ? path : path.split(separator);
         return properties.reduce((prev, curr) => prev?.[curr], obj);
     }
+
     /**
      * Debounce decorator
      * @param {function} callee 
@@ -255,6 +290,14 @@ class utils {
             timer = setTimeout(() => { callee.apply(this, args); }, timeout);
         };
     }
+
+    /**
+     * Throttle decorator
+     * @param {Function} fn 
+     * @param {number} threshhold 
+     * @param {any} scope 
+     * @returns 
+     */
     static throttle(fn, threshhold, scope) {
         threshhold || (threshhold = 250);
         var last,
@@ -277,8 +320,9 @@ class utils {
             }
         };
     }
+
     /**
-     * Throttle decorator
+     * Debounce decorator but passes the first function call right away
      * @param {function} fn 
      * @param {Number} threshold 
      * @param {*} scope 
@@ -305,6 +349,7 @@ class utils {
             }
         };
     }
+
     /**
      * Set Cookie function
      * @link https://www.quirksmode.org/js/cookies.html
@@ -321,6 +366,7 @@ class utils {
         }
         document.cookie = name + "=" + (value || "") + expires + "; path=/";
     }
+
     /**
      * Get Cookie function
      * @link https://www.quirksmode.org/js/cookies.html
@@ -337,6 +383,7 @@ class utils {
         }
         return null;
     }
+
     /**
      * Clear Cookie function
      * @link https://www.quirksmode.org/js/cookies.html
@@ -345,9 +392,10 @@ class utils {
     static clearCookie(name) {
         document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
+
     /**
-     * Returns thumbnails from current page
-     * @returns {NodeListOf<HTMLImageElement>}
+     * Returns thumbnails is current page type supports thumbnails
+     * @returns {NodeListOf<HTMLImageElement>=}
      */
     static getThumbnails() {
         switch (context.pageType) {
@@ -360,14 +408,56 @@ class utils {
                 return undefined;
         }
     }
+
     /**
-     * 
+     * Extract post ID from the url
      * @param {HTMLImageElement} thumb 
      * @returns {number}
      */
     static getThumbPostId(thumb) {
         return Number(/id=([0-9]+)/.exec(thumb.parentElement.getAttribute("href"))[1]);
     }
+
+    /**
+     * Throttled version of GM_SetValue
+     */
+    static GM_setCacheThrottle = utils.throttle((v) => GM_setValue("postCache", v), 1000);
+    
+    /** 
+     * @type {Object<number, PostItem>} 
+     * @private
+     * Local post cache
+     */
+    static localPostCache;
+    
+    /** 
+     * Loads the post cache in a local variable
+     * @returns {Object<number, PostItem>} 
+     * */
+    static get postCache() {
+        if (!this.localPostCache)
+            this.localPostCache = GM_getValue("postCache", {});
+        return this.localPostCache;
+    }
+    
+    /**
+     * Saves the post cache using throttled function and reloads local post cache
+     */
+    static set postCache(value) {
+        utils.GM_setCacheThrottle(value);
+        this.localPostCache = GM_getValue("postCache", {});
+    }
+    
+    /**
+     * Saves the post cache while trying to throttle writings and race conditions
+     */
+    static postCacheSave() {
+        utils.GM_setCacheThrottle(utils.postCache);
+    }
+    
+    /** @type {RepeatFetchQueue} */
+    static fetchQueue = new RepeatFetchQueue(12, 5);
+    
     /** 
      * @typedef PostItem
      * @property {string} highResThumb - high resolution thumb url (image/animated gif/video preview)
@@ -383,24 +473,8 @@ class utils {
      * @property {string} md5 - md5 for file (0's for video)
      * @property {number} id - post id
      */
-    static GM_setValueThrottle = utils.throttle((v) => GM_setValue("postCache", v), 1000);
-    /** @type {Object<number, PostItem>} */
-    static localPostCache;
-    /** @returns {Object<number, PostItem>} */
-    static get postCache() {
-        if (!this.localPostCache) this.localPostCache = GM_getValue("postCache", {});
-        return this.localPostCache;
-    }
-    static set postCache(value) {
-        utils.GM_setValueThrottle(value);
-    }
-    static postCacheSave() {
-        utils.GM_setValueThrottle(utils.postCache);
-    }
-    /** @type {RepeatFetchQueue} */
-    static fetchQueue = new RepeatFetchQueue(12, 5);
     /**
-     * Cache and return post item
+     * Caches and returns Post Item
      * @param {number} postId 
      * @returns {Promise<PostItem>}
      */
@@ -409,7 +483,8 @@ class utils {
         if (Object.keys(utils.postCache).length > context.configManager.findValueByKey("general.maxCache"))
             utils.postCache = {};
 
-        if (!utils.postCache[postId]) {
+        if (!utils.postCache[postId]) { // in not in the cache
+            // fetch using garanteed fetch queue
             return this.fetchQueue.Fetch("https://" + window.location.host + "/index.php?page=dapi&s=post&q=index&json=1&id=" + postId)
                 .then(response => response.json())
                 .then(json => {
@@ -421,6 +496,7 @@ class utils {
 
                     if (!highResThumb || !fileLink) throw new Error("Failed to parse url");
 
+                    // redundant tag type distinguish, for now just keep all as general
                     let tags = {
                         artist: [],
                         character: [],
@@ -432,6 +508,7 @@ class utils {
                     let score = post.score;
                     let rating = post.rating;
 
+                    // put the Item in the cache
                     utils.postCache[postId] = {
                         highResThumb: highResThumb,
                         download: fileLink,
@@ -446,11 +523,12 @@ class utils {
                     return utils.postCache[postId];
                 })
                 .catch(error => Promise.reject(error));
-        } else
+        } else // if already cached
             return utils.postCache[postId];
     }
+    
     /**
-     * 
+     * Downloads given Post Item
      * @param {PostItem} post 
      * @returns {Promise}
      */
@@ -493,8 +571,9 @@ class utils {
             utils.debugLog("Downloading started", { url: post.download, filename });
         });
     }
+    
     /**
-     * 
+     * Downloads post by given post ID
      * @param {number} postId
      */
     static downloadPostById(postId) {
@@ -504,12 +583,13 @@ class utils {
                 .catch((r) => utils.debugLog("Failed to download post item", { post: p, error: r.error, details: r.details })))
             .catch(e => utils.debugLog("Failed to load post item for", { post: e.target, id: postId, error: e }));
     }
+    
     /**
-     * Wildcard converter (*? supported)
+     * Wildcard to regex converter (*? supported)
      * @link https://stackoverflow.com/a/57527468
      * @param {string} wildcard 
      * @param {string} str 
-     * @returns {boolean} If str matches wildcard
+     * @returns {boolean} 'True' if str matches wildcard
      */
     static wildTest(wildcard, str) {
         if (wildcard.includes("*") || wildcard.includes("?")) {
@@ -520,8 +600,9 @@ class utils {
             return str == wildcard;
         }
     }
+    
     /**
-     * Set/create innerHTML of a <style> elem by its id
+     * Set/create textContent of a <style> elem by its id
      * @param {string} id
      * @param {string} css
      */
@@ -537,6 +618,7 @@ class utils {
             styleElem.textContent = css
         }
     }
+    
     /**
      * Generates hash of a string
      * @param {string} str
@@ -546,7 +628,6 @@ class utils {
         let enc = new TextEncoder();
         let buff = await window.crypto.subtle.digest("SHA-1", enc.encode(str));
         let arr = Array.from(new Uint8Array(buff));
-        let string = arr.map((b) => b.toString(16).padStart(2, "0")).join("");
-        return string;
+        return arr.map((b) => b.toString(16).padStart(2, "0")).join("");
     }
 }
