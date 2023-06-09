@@ -25,7 +25,7 @@ class ThemeManager {
      * @returns {boolean} Get cookie for current darkmode
      */
     get forceSessionMode() {
-        let cookie = utils.getCookie("force_dark_mode");
+        let cookie = utilsCookies.get("force_dark_mode");
         if (cookie) return cookie == "true";
         else return undefined;
     }
@@ -34,8 +34,8 @@ class ThemeManager {
      * @param {boolean} value Set cookie for force darkmode
      */
     set forceSessionMode(value) {
-        if (value == undefined) utils.clearCookie("force_dark_mode");
-        else utils.setCookie("force_dark_mode", String(value));
+        if (value == undefined) utilsCookies.clear("force_dark_mode");
+        else utilsCookies.set("force_dark_mode", String(value));
     }
     /**
      * Replaces stock site css with a modifyable one
@@ -161,7 +161,7 @@ class ThemeManager {
             }
         `);
 
-        utils.clearCookie("dark_mode");
+        utilsCookies.clear("dark_mode");
     }
     /**
      * applies default gelbooru dark mode
@@ -256,7 +256,7 @@ class ThemeManager {
             }
         `);
 
-        utils.setCookie("dark_mode", "1");
+        utilsCookies.set("dark_mode", "1");
     }
     /**
      * applies amoled dark mode
@@ -348,7 +348,7 @@ class ThemeManager {
             }
         `);
 
-        utils.setCookie("dark_mode", "1");        
+        utilsCookies.set("dark_mode", "1");        
     }
     scheduleCheckForThemeSwitch() {
         let date = new Date();

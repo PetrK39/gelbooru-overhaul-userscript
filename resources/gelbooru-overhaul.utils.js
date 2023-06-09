@@ -351,49 +351,6 @@ class utils {
     }
 
     /**
-     * Set Cookie function
-     * @link https://www.quirksmode.org/js/cookies.html
-     * @param {String} name 
-     * @param {String} value 
-     * @param {Number} [days]
-     */
-    static setCookie(name, value, days) {
-        var expires = "";
-        if (days) {
-            var date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "") + expires + "; path=/";
-    }
-
-    /**
-     * Get Cookie function
-     * @link https://www.quirksmode.org/js/cookies.html
-     * @param {String} name 
-     * @returns {String}
-     */
-    static getCookie(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-
-    /**
-     * Clear Cookie function
-     * @link https://www.quirksmode.org/js/cookies.html
-     * @param {String} name 
-     */
-    static clearCookie(name) {
-        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    }
-
-    /**
      * Returns thumbnails is current page type supports thumbnails
      * @returns {NodeListOf<HTMLImageElement>=}
      */
@@ -629,5 +586,53 @@ class utils {
         let buff = await window.crypto.subtle.digest("SHA-1", enc.encode(str));
         let arr = Array.from(new Uint8Array(buff));
         return arr.map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+}
+
+/**
+ * @Class Cookie utility functions
+ */
+class utilsCookies {
+/**
+ * Set Cookie function
+ * @link https://www.quirksmode.org/js/cookies.html
+ * @param {String} name 
+ * @param {String} value 
+ * @param {Number} [days]
+ */
+    static set(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    /**
+     * Get Cookie function
+     * @link https://www.quirksmode.org/js/cookies.html
+     * @param {String} name 
+     * @returns {String}
+     */
+    static get(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    /**
+     * Clear Cookie function
+     * @link https://www.quirksmode.org/js/cookies.html
+     * @param {String} name 
+     */
+    static clear(name) {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
 }
