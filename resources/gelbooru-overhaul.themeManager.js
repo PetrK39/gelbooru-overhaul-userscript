@@ -2,41 +2,49 @@
  * @class Class that manages light/dark theme switching
  */
 class ThemeManager {
+    /**
+     * Indicates whether the browser supports light/dark themes
+     * @type {Boolean}
+     * @private
+     */
     isMatchMediaSupported = (window.matchMedia && window.matchMedia('(prefers-color-scheme)').media !== 'not all');
+
     constructor() {
         this.replaceCss();
         this.checkForThemeSwitch();
 
         if (this.isMatchMediaSupported)
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener("change", e => this.checkForThemeSwitch());
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener("change", () => this.checkForThemeSwitch());
 
         this.scheduleCheckForThemeSwitch();
 
-        if (context.pageType != utils.pageTypes.UNDEFINED) {
-            let darkModeButton = document.querySelector('#myTopnav a[onclick*="darkModeToggle(); return false;"], #navbar a[onclick*="darkModeToggle(); return false;"]');
-            darkModeButton.onclick = undefined;
-            darkModeButton.setAttribute("title", "Click to force switch dark mode for current session\nRight click to clear force mode");
-            darkModeButton.addEventListener("click", e => this.switchForceSessionMode());
-            darkModeButton.addEventListener("contextmenu", e => this.clearForceSessionMode());
-        }
+        this.switchForceSessionMode = this.switchForceSessionMode.bind(this);
+        this.clearForceSessionMode = this.clearForceSessionMode.bind(this);
+
+        this.replaceButton();
     }
+
     /**
+     * Gets the force mode for this session
      * @private
-     * @returns {boolean} Get cookie for current darkmode
+     * @returns {boolean} True/False if force Dark/Light mode, undefined for automatic
      */
-    get forceSessionMode() {
+    get forceSession() {
         let cookie = utilsCookies.get("force_dark_mode");
         if (cookie) return cookie == "true";
         else return undefined;
     }
+
     /**
+     * Sets the force mode for this session
      * @private
-     * @param {boolean} value Set cookie for force darkmode
+     * @param {boolean} value Set cookie for force darkmode (True/Flase to force Dark/Light mode, undefined for automatic)
      */
-    set forceSessionMode(value) {
+    set forceSession(value) {
         if (value == undefined) utilsCookies.clear("force_dark_mode");
         else utilsCookies.set("force_dark_mode", String(value));
     }
+
     /**
      * Replaces stock site css with a modifyable one
      * @private
@@ -49,51 +57,89 @@ class ThemeManager {
 
         GM_addStyle(GM_getResourceText("css-common"));
     }
+
+    /**
+     * Replaces stock site theme switch button
+     */
+    replaceButton() {
+        if (context.pageType == utils.pageTypes.UNDEFINED)
+            return;
+
+        let darkModeButton = document.querySelector('#myTopnav a[onclick*="darkModeToggle(); return false;"], #navbar a[onclick*="darkModeToggle(); return false;"]');
+        darkModeButton.onclick = undefined;
+        darkModeButton.setAttribute("title", "Click to force switch dark mode for current session\nRight click to clear force mode");
+        darkModeButton.addEventListener("click", this.switchForceSessionMode);
+        darkModeButton.addEventListener("contextmenu", this.clearForceSessionMode);
+    }
+
     /**
      * Checks if darkmode needs to be switched
      */
     checkForThemeSwitch(isAmoled = undefined) {
         if (isAmoled == undefined) isAmoled = context.configManager.findValueByKey("darkMode.amoled");
-        this.isDarkModeRequired 
-            ? (isAmoled ? this.applyAmoledDarkMode() : this.applyDefaultDarkMode()) 
-            : this.applyDefaultLightMode();
+
+        // if forceSession is undefined then let theme be defined by isDarkModeRequired
+        // otherwise apply forceSession value
+        this.forceSession == undefined
+            ? this.isDarkModeRequired
+                ? (isAmoled ? this.applyAmoledDarkMode() : this.applyDefaultDarkMode())
+                : this.applyDefaultLightMode()
+            : this.forceSession
+                ? (isAmoled ? this.applyAmoledDarkMode() : this.applyDefaultDarkMode())
+                : this.applyDefaultLightMode();
     }
+
     /**
      * Switch cookie for force darkmode
+     * @param {MouseEvent} e
      * @private
      */
-    switchForceSessionMode() {
-        this.forceSessionMode = !this.forceSessionMode;
+    switchForceSessionMode(e) {
+        e.preventDefault();
+
+        if (this.forceSession == undefined) {
+            this.forceSession = !this.isDarkModeRequired;
+        } else {
+            this.forceSession = !this.forceSession;
+        }
         this.checkForThemeSwitch();
     }
+
     /**
      * Clear cookie for force darkmode
+     * @param {MouseEvent} e
      * @private
      */
-    clearForceSessionMode() {
-        this.forceSessionMode = undefined;
+    clearForceSessionMode(e) {
+        e.preventDefault();
+
+        this.forceSession = undefined;
         this.checkForThemeSwitch();
     }
+
     /**
+     * Determines if dark mode should be enabled
      * @private
      * @returns {boolean} Required Dark Mode state
      */
     get isDarkModeRequired() {
-        let forceSession = this.forceSessionMode;
-        if (this.forceSessionMode != undefined) return forceSession;
-
-        if (context.configManager.findValueByKey("darkMode.force")) {
+        if (context.configManager.findValueByKey("darkMode.force"))
             return true;
-        } else if (context.configManager.findValueByKey("darkMode.auto")) {
+        // Dark if force
+
+        if (context.configManager.findValueByKey("darkMode.auto")) {
             if (context.configManager.findValueByKey("darkMode.forceTime") || !this.isMatchMediaSupported) {
                 let hours = new Date().getHours();
                 return hours >= context.configManager.findValueByKey("darkMode.timeStart") || hours <= context.configManager.findValueByKey("darkMode.timeEnd");
+                // Dark if time is in the range
             } else {
                 return window.matchMedia('(prefers-color-scheme: dark)').matches;
+                // Dark if requested by browser
             }
-        } else {
-            return false;
         }
+
+        return false;
+        // Light as fallback
     }
     /**
      * applies default gelbooru light mode
@@ -117,7 +163,7 @@ class ThemeManager {
                 --notice-not-error-background-color: #FFFBBF;
                 --notice-not-error-border: 1px solid #CCC999;
 
-                    --thread-title-background-color: #006ffa;
+                --thread-title-background-color: #006ffa;
 
                 --topnav-a-active-foreground-color: #006ffa;
 
@@ -144,6 +190,8 @@ class ThemeManager {
 
                 --navsubmenu-background: #444444;
 
+                --ui-widget-content-background: #fff;
+
                 --searcharea-background: #fff;
                 --searchlist-background: #0773fb;
 
@@ -163,6 +211,7 @@ class ThemeManager {
 
         utilsCookies.clear("dark_mode");
     }
+
     /**
      * applies default gelbooru dark mode
      */
@@ -193,7 +242,7 @@ class ThemeManager {
                 --notice-not-error-border: 1px solid #333;
                 --notice-not-error-foreground-color: #fff;
 
-                    --thread-title-background-color: #303030;
+                --thread-title-background-color: #303030;
 
                 --topnav-a-active-foreground-color: #000;
 
@@ -258,6 +307,7 @@ class ThemeManager {
 
         utilsCookies.set("dark_mode", "1");
     }
+
     /**
      * applies amoled dark mode
      */
@@ -348,10 +398,15 @@ class ThemeManager {
             }
         `);
 
-        utilsCookies.set("dark_mode", "1");        
+        utilsCookies.set("dark_mode", "1");
     }
+
+    /**
+     * Schedules the check for theme switching for every hour
+     */
     scheduleCheckForThemeSwitch() {
         let date = new Date();
+
         if (date.getMinutes() === 0) {
             this.checkForThemeSwitch();
             setTimeout(() => this.scheduleCheckForThemeSwitch(), 60 * 60 * 1000);
