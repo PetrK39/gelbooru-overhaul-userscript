@@ -667,7 +667,7 @@ class BlacklistManager {
     async checkPosts(thumbs) {
         await Promise.all(                                                                                  // wait until all
             Object.values(thumbs).map(async t => {                                                    // map each thumb to an promise
-                let item = await utils.loadPostItem(utils.getThumbPostId(t));                                // load post item for current post
+                let item = await utilsPost.loadPostItem(utils.getThumbPostId(t));                                // load post item for current post
                 let isHit = await this.checkPost(item);                                                     // check every entry for hits on current post
                 if (isHit) this.totalHits.push(item.id);                                                    // if it's any hits, push post to total hits array
             }));

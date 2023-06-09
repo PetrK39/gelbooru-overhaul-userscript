@@ -442,7 +442,7 @@ function applyVariableBlacklist(value) {
 async function setImageHighResSource(e) {
     /** @type {HTMLImageElement} */
     let img = e.target;
-    utils.loadPostItem(Number(/id=([0-9]+)/.exec(img.parentElement.getAttribute("href"))[1]))
+    utilsPost.loadPostItem(Number(/id=([0-9]+)/.exec(img.parentElement.getAttribute("href"))[1]))
         .then((post) => img.src = post.highResThumb)
         .catch((error) => utils.debugLog("Failed to load highres image for following element with following error:", { img, error }));
 
@@ -536,7 +536,7 @@ function downloadThumbWithRMB(e) {
 
     e.preventDefault();
 
-    utils.downloadPostById(utils.getThumbPostId(e.target));
+    utilsPost.downloadPostById(utils.getThumbPostId(e.target));
 }
 /**
  * FastDL contextmenu event listener
@@ -550,7 +550,7 @@ function downloadPostWithRMB(e) {
     e.preventDefault();
 
     let postId = Number(/id=([0-9]+)/.exec(document.location.href)[1]);
-    utils.downloadPostById(postId);
+    utilsPost.downloadPostById(postId);
 }
 /**
  * 

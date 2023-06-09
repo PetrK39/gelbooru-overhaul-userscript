@@ -192,7 +192,7 @@ class utils {
                 return utils.pageTypes.WIKI_VIEW;
             case (page == "pool" && s == "show"):
                 return utils.pageTypes.POOL_VIEW;
-            default: 
+            default:
                 return utils.pageTypes.UNDEFINED;
         }
     }
@@ -376,60 +376,164 @@ class utils {
     }
 
     /**
+     * Wildcard to regex converter (*? supported)
+     * @link https://stackoverflow.com/a/57527468
+     * @param {string} wildcard 
+     * @param {string} str 
+     * @returns {boolean} 'True' if str matches wildcard
+     */
+    static wildTest(wildcard, str) {
+        if (wildcard.includes("*") || wildcard.includes("?")) {
+            let w = wildcard.replace(/[.+^${}()|[\]\\]/g, '\\$&'); // regexp escape 
+            const re = new RegExp(`^${w.replace(/\*/g, '.*').replace(/\?/g, '.')}$`, 'i');
+            return re.test(str); // remove last 'i' above to have case sensitive
+        } else {
+            return str == wildcard;
+        }
+    }
+
+    /**
+     * Set/create textContent of a <style> elem by its id
+     * @param {string} id
+     * @param {string} css
+     */
+    static setDynamicStyle(id, css) {
+        /** @type {HTMLStyleElement} */
+        let styleElem = document.getElementById(id);
+        if (!styleElem) {
+            GM_addElement("style", {
+                id: id,
+                textContent: css
+            });
+        } else {
+            styleElem.textContent = css
+        }
+    }
+
+    /**
+     * Generates hash of a string
+     * @param {string} str
+     * @return {Promise<string>}
+     */
+    static async hash(str) {
+        let enc = new TextEncoder();
+        let buff = await window.crypto.subtle.digest("SHA-1", enc.encode(str));
+        let arr = Array.from(new Uint8Array(buff));
+        return arr.map((b) => b.toString(16).padStart(2, "0")).join("");
+    }
+}
+
+/**
+ * @Class Cookie utility functions
+ */
+class utilsCookies {
+    /**
+     * Set Cookie function
+     * @link https://www.quirksmode.org/js/cookies.html
+     * @param {String} name 
+     * @param {String} value 
+     * @param {Number} [days]
+     */
+    static set(name, value, days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    /**
+     * Get Cookie function
+     * @link https://www.quirksmode.org/js/cookies.html
+     * @param {String} name 
+     * @returns {String}
+     */
+    static get(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+
+    /**
+     * Clear Cookie function
+     * @link https://www.quirksmode.org/js/cookies.html
+     * @param {String} name 
+     */
+    static clear(name) {
+        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+}
+
+/**
+ * @Class Post caching/loading utility functions
+ */
+class utilsPost {
+    /** 
+         * @typedef PostItem
+         * @property {string} highResThumb - high resolution thumb url (image/animated gif/video preview)
+         * @property {string} download - download url (original image/gif/video)
+         * @property {Object} tags - list of tags by category
+         * @property {string[]} tags.artist - artist tags (can be empty)
+         * @property {string[]} tags.character - character tags (can be empty)
+         * @property {string[]} tags.copyright - copyright tags (can be empty)
+         * @property {string[]} tags.metadata - metadata tags (can be empty)
+         * @property {string[]} tags.general - general tags (can be empty)
+         * @property {string} rating - post rating
+         * @property {number} score - post score
+         * @property {string} md5 - md5 for file (0's for video)
+         * @property {number} id - post id
+         */
+
+    /**
      * Throttled version of GM_SetValue
+     * @private
      */
     static GM_setCacheThrottle = utils.throttle((v) => GM_setValue("postCache", v), 1000);
-    
+
     /** 
      * @type {Object<number, PostItem>} 
      * @private
      * Local post cache
      */
-    static localPostCache;
-    
+    static localCache;
+
     /** 
      * Loads the post cache in a local variable
+     * @private
      * @returns {Object<number, PostItem>} 
      * */
-    static get postCache() {
-        if (!this.localPostCache)
-            this.localPostCache = GM_getValue("postCache", {});
-        return this.localPostCache;
+    static get cache() {
+        if (!this.localCache) this.localCache = GM_getValue("postCache", {});
+        return this.localCache;
     }
-    
+
     /**
      * Saves the post cache using throttled function and reloads local post cache
+     * @private
      */
-    static set postCache(value) {
-        utils.GM_setCacheThrottle(value);
-        this.localPostCache = GM_getValue("postCache", {});
+    static set cache(value) {
+        this.GM_setCacheThrottle(value);
+        this.localCache = GM_getValue("postCache", {});
     }
-    
+
     /**
      * Saves the post cache while trying to throttle writings and race conditions
+     * @private
      */
-    static postCacheSave() {
-        utils.GM_setCacheThrottle(utils.postCache);
+    static saveCache() {
+        this.GM_setCacheThrottle(this.cache);
     }
-    
+
     /** @type {RepeatFetchQueue} */
     static fetchQueue = new RepeatFetchQueue(12, 5);
-    
-    /** 
-     * @typedef PostItem
-     * @property {string} highResThumb - high resolution thumb url (image/animated gif/video preview)
-     * @property {string} download - download url (original image/gif/video)
-     * @property {Object} tags - list of tags by category
-     * @property {string[]} tags.artist - artist tags (can be empty)
-     * @property {string[]} tags.character - character tags (can be empty)
-     * @property {string[]} tags.copyright - copyright tags (can be empty)
-     * @property {string[]} tags.metadata - metadata tags (can be empty)
-     * @property {string[]} tags.general - general tags (can be empty)
-     * @property {string} rating - post rating
-     * @property {number} score - post score
-     * @property {string} md5 - md5 for file (0's for video)
-     * @property {number} id - post id
-     */
+
     /**
      * Caches and returns Post Item
      * @param {number} postId 
@@ -437,10 +541,10 @@ class utils {
      */
     static async loadPostItem(postId) {
         // just clear postCache if exceeded limit
-        if (Object.keys(utils.postCache).length > context.configManager.findValueByKey("general.maxCache"))
-            utils.postCache = {};
+        if (Object.keys(this.cache).length > context.configManager.findValueByKey("general.maxCache"))
+            this.cache = {};
 
-        if (!utils.postCache[postId]) { // in not in the cache
+        if (!this.cache[postId]) { // in not in the cache
             // fetch using garanteed fetch queue
             return this.fetchQueue.Fetch("https://" + window.location.host + "/index.php?page=dapi&s=post&q=index&json=1&id=" + postId)
                 .then(response => response.json())
@@ -466,7 +570,7 @@ class utils {
                     let rating = post.rating;
 
                     // put the Item in the cache
-                    utils.postCache[postId] = {
+                    this.cache[postId] = {
                         highResThumb: highResThumb,
                         download: fileLink,
                         tags: tags,
@@ -476,14 +580,14 @@ class utils {
                         rating: rating
                     };
 
-                    utils.postCacheSave();
-                    return utils.postCache[postId];
+                    this.saveCache();
+                    return this.cache[postId];
                 })
                 .catch(error => Promise.reject(error));
         } else // if already cached
-            return utils.postCache[postId];
+            return this.cache[postId];
     }
-    
+
     /**
      * Downloads given Post Item
      * @param {PostItem} post 
@@ -528,7 +632,7 @@ class utils {
             utils.debugLog("Downloading started", { url: post.download, filename });
         });
     }
-    
+
     /**
      * Downloads post by given post ID
      * @param {number} postId
@@ -539,100 +643,5 @@ class utils {
                 .then(() => utils.debugLog("Post item successfully downloaded", p))
                 .catch((r) => utils.debugLog("Failed to download post item", { post: p, error: r.error, details: r.details })))
             .catch(e => utils.debugLog("Failed to load post item for", { post: e.target, id: postId, error: e }));
-    }
-    
-    /**
-     * Wildcard to regex converter (*? supported)
-     * @link https://stackoverflow.com/a/57527468
-     * @param {string} wildcard 
-     * @param {string} str 
-     * @returns {boolean} 'True' if str matches wildcard
-     */
-    static wildTest(wildcard, str) {
-        if (wildcard.includes("*") || wildcard.includes("?")) {
-            let w = wildcard.replace(/[.+^${}()|[\]\\]/g, '\\$&'); // regexp escape 
-            const re = new RegExp(`^${w.replace(/\*/g, '.*').replace(/\?/g, '.')}$`, 'i');
-            return re.test(str); // remove last 'i' above to have case sensitive
-        } else {
-            return str == wildcard;
-        }
-    }
-    
-    /**
-     * Set/create textContent of a <style> elem by its id
-     * @param {string} id
-     * @param {string} css
-     */
-    static setDynamicStyle(id, css) {
-        /** @type {HTMLStyleElement} */
-        let styleElem = document.getElementById(id);
-        if (!styleElem) {
-            GM_addElement("style", {
-                id: id,
-                textContent: css
-            });
-        } else {
-            styleElem.textContent = css
-        }
-    }
-    
-    /**
-     * Generates hash of a string
-     * @param {string} str
-     * @return {Promise<string>}
-     */
-    static async hash(str) {
-        let enc = new TextEncoder();
-        let buff = await window.crypto.subtle.digest("SHA-1", enc.encode(str));
-        let arr = Array.from(new Uint8Array(buff));
-        return arr.map((b) => b.toString(16).padStart(2, "0")).join("");
-    }
-}
-
-/**
- * @Class Cookie utility functions
- */
-class utilsCookies {
-/**
- * Set Cookie function
- * @link https://www.quirksmode.org/js/cookies.html
- * @param {String} name 
- * @param {String} value 
- * @param {Number} [days]
- */
-    static set(name, value, days) {
-        var expires = "";
-        if (days) {
-            var date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "") + expires + "; path=/";
-    }
-
-    /**
-     * Get Cookie function
-     * @link https://www.quirksmode.org/js/cookies.html
-     * @param {String} name 
-     * @returns {String}
-     */
-    static get(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-
-    /**
-     * Clear Cookie function
-     * @link https://www.quirksmode.org/js/cookies.html
-     * @param {String} name 
-     */
-    static clear(name) {
-        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     }
 }
