@@ -48,16 +48,16 @@
         context.infiniteScrolling = infiniteScrolling;
 
         configManager.addUpdateListener("advancedBlacklist.enable", applyTweakAdvancedBlacklist);
-        configManager.addUpdateListener("advancedBlacklist.hideMode", applyCssVariableBlacklist);
-        configManager.addUpdateListener("advancedBlacklist.hideFilter", applyCssVariableBlacklist);
-        configManager.addUpdateListener("advancedBlacklist.showOnHover", applyCssVariableBlacklist);
-        configManager.addUpdateListener("advancedBlacklist.enlargeOnHover", applyCssVariableBlacklist);
+        configManager.addUpdateListener("advancedBlacklist.hideMode", applyCssBlacklistMode);
+        configManager.addUpdateListener("advancedBlacklist.hideFilter", applyCssBlacklistFilter);
+        configManager.addUpdateListener("advancedBlacklist.showOnHover", applyCssBlacklistShowOnHover);
+        configManager.addUpdateListener("advancedBlacklist.enlargeOnHover", applyCssBlacklistEnlargeOnHover);
         configManager.addUpdateListener("advancedBlacklist.entriesOrder", applyVariableBlacklist);
 
         configManager.addUpdateListener("collapsibleSidebar.enable", applyTweakCollapseSidebar);
-        configManager.addUpdateListener("collapsibleSidebar.width", applyCssVariableGoCollapseSidebar);
-        configManager.addUpdateListener("collapsibleSidebar.color", applyCssVariableGoCollapseSidebar);
-        configManager.addUpdateListener("collapsibleSidebar.opacity", applyCssVariableGoCollapseSidebar);
+        configManager.addUpdateListener("collapsibleSidebar.width", applyCssSidebarWidth);
+        configManager.addUpdateListener("collapsibleSidebar.color", applyCssSidebarColor);
+        configManager.addUpdateListener("collapsibleSidebar.opacity", applyCssSidebarOpacity);
 
         configManager.addUpdateListener("post.center", applyTweakPostCenter);
         configManager.addUpdateListener("post.fitTweaks", applyTweakPostFit);
@@ -66,15 +66,14 @@
         configManager.addUpdateListener("post.autoScroll", applyTweakPostAutoScroll);
 
         configManager.addUpdateListener("thumbs.resizeGallery", applyTweakResizeThumbsGallery);
-        configManager.addUpdateListener("thumbs.resizeGallerySize", applyCssVariableGoThumbnailResize);
+        configManager.addUpdateListener("thumbs.resizeGallerySize", applyCssThumbnailResize);
         configManager.addUpdateListener("thumbs.resizeMoreLikeThis", applyTweakResizeThumbsMoreLikeThis);
-        configManager.addUpdateListener("thumbs.resizeMoreLikeThisSize", applyCssVariableGoThumbnailResize);
+        configManager.addUpdateListener("thumbs.resizeMoreLikeThisSize", applyCssMoreLikeThisThumbnailResize);
         configManager.addUpdateListener("thumbs.enlargeOnHover", applyTweakEnlargeOnHover);
-        configManager.addUpdateListener("thumbs.scale", applyCssVariableGoThumbnailEnlarge);
+        configManager.addUpdateListener("thumbs.scale", applyCssThumbnailEnlarge);
         configManager.addUpdateListener("thumbs.highRes", applyTweakLoadHighRes);
         configManager.addUpdateListener("thumbs.loader", applyTweakLoadingIndicator);
         configManager.addUpdateListener("thumbs.removeTitle", applyTweakRemoveTitle);
-        configManager.addUpdateListener("thumbs.preventOffScreen", applyTweakPreventOffScreen);
         configManager.addUpdateListener("thumbs.roundCorners", applyTweakRoundCorners);
 
         configManager.addUpdateListener("fastDL.thumbs", applyTweakFastDL);

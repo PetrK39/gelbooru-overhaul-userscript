@@ -355,11 +355,6 @@ class ConfigManager {
                         name: "Remove Title",
                         description: "Remove popup hint for thumbnails to get rid of flicker and make viewing less annoying"
                     },
-                    preventOffScreen: {
-                        value: true,
-                        name: "Prevent Off Screen Enlarging",
-                        description: "Prevent images on the sides of the screen extending beyond the edges of the screen"
-                    },
                     roundCorners: {
                         value: true,
                         name: "Round Corners",
