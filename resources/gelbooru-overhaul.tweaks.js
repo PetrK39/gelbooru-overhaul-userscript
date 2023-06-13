@@ -473,7 +473,7 @@ function applyTweakInfiniteScroll(value) {
  */
 function applyTweakPaginatorOnTop(value) {
     if (context.pageType != utils.pageTypes.GALLERY) return;
-    utils.debugLog(`Applying InfiniteScroll state: ${String(value)}`);
+    utils.debugLog(`Applying PaginatorOnTop state: ${String(value)}`);
 
     if (value) {
         if (document.querySelector(".top-pagination")) return;
@@ -493,7 +493,7 @@ function applyTweakPaginatorOnTop(value) {
  */
 function applyTweakGoToTop(value) {
     if (context.pageType != utils.pageTypes.GALLERY) return;
-    utils.debugLog(`Applying InfiniteScroll state: ${String(value)}`);
+    utils.debugLog(`Applying GoToTop state: ${String(value)}`);
 
     if (value) {
         let goTopDiv = document.createElement("div");
