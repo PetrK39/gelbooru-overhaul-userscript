@@ -327,7 +327,9 @@ class ThemeManager {
 
                 --alert-info-border: 1px solid #333;
                 --alert-info-foreground-color: #fff;
+                --alert-info-background-color: #000;
 
+                --alert-success-background: #000;
                 --alert-success-a-foreground-color: #90cf80;
                 --alert-info-a-foreground-color: #fff;
 
