@@ -14,6 +14,8 @@ class context {
      * @see {utils.pageTypes}
      * @type {string} */
     static pageType;
+    /** @type {RepeatFetchQueue} */
+    static queue;
 }
 
 /**
@@ -28,6 +30,9 @@ class RepeatFetchQueue {
      * @property {Function} Reject
      * @property {string} State
      * @property {number} Retries
+     * 
+     * @callback RateLimitCallback
+     * @returns  {void}
      */
 
     /**
@@ -57,6 +62,12 @@ class RepeatFetchQueue {
      * @private
      */
     activeItems;
+
+    /**
+     * @type {number}
+     * @public
+     */
+    rateLimitDelay = 15000;
 
     constructor(parallelRequests = 5, maxRetryCount = 5) {
         this.parallelRequests = parallelRequests;
@@ -105,7 +116,8 @@ class RepeatFetchQueue {
                     if (response.ok) this.handleResult(item, this.ItemStates.Succeeded, response);
                     else if (response.status == 429) {
                         utils.debugLog("Hit rate limit, waiting 15 seconds");
-                        setTimeout(() => { this.reQueueItem(item, response.statusText); }, 15000);
+                        this.onRateLimitDebounce();
+                        setTimeout(() => { this.reQueueItem(item, response.statusText); }, this.rateLimitDelay);
                     } else
                         this.reQueueItem(item, response.statusText);
                 },
@@ -151,6 +163,31 @@ class RepeatFetchQueue {
         }
         this.checkNext();
     }
+
+    /**
+     * @type {RateLimitCallback[]}
+     */
+    dispatchHandlers = [];
+
+    /**
+     * 
+     * @param {RateLimitCallback} handler 
+     * @returns {number}
+     */
+    addRatelimitListener(handler) {
+        if (!this.dispatchHandlers) this.dispatchHandlers = [];
+        return this.dispatchHandlers.push(handler);
+    }
+
+    /**
+     * Call handlers
+     * @public
+     */
+    onRateLimit() {
+        if (this.dispatchHandlers) this.dispatchHandlers.forEach(h => h());
+    }
+
+    onRateLimitDebounce = utils.debounceFirst(this.onRateLimit, this.rateLimitDelay);
 }
 
 /**
@@ -531,9 +568,6 @@ class utilsPost {
         this.GM_setCacheThrottle(this.cache);
     }
 
-    /** @type {RepeatFetchQueue} */
-    static fetchQueue = new RepeatFetchQueue(12, 5);
-
     /**
      * Caches and returns Post Item
      * @param {number} postId 
@@ -546,7 +580,7 @@ class utilsPost {
 
         if (!this.cache[postId]) { // in not in the cache
             // fetch using garanteed fetch queue
-            return this.fetchQueue.Fetch("https://" + window.location.host + "/index.php?page=dapi&s=post&q=index&json=1&id=" + postId)
+            return context.queue.Fetch("https://" + window.location.host + "/index.php?page=dapi&s=post&q=index&json=1&id=" + postId)
                 .then(response => response.json())
                 .then(json => {
                     let post = json.post[0];

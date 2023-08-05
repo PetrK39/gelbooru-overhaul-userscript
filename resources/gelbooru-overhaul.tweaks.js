@@ -578,6 +578,27 @@ function applyTweakGoToTop(value) {
     }
 }
 
+function registerRateLimitNotification(duration) {
+    let div = document.createElement("div");
+    let center = document.createElement("center");
+    let text = document.createTextNode(`Hit rate limit, waiting ${duration/1000} seconds`);
+    let bar = document.createElement("div");
+
+    div.appendChild(center);
+    center.appendChild(text);
+    div.appendChild(bar);
+
+    div.setAttribute("id", "rate-limit-notification");
+    div.setAttribute("class", "alert alert-success hidden");
+
+    let container = document.body.querySelector("#container");
+    if (container) container.appendChild(div);
+}
+
+function displayRateLimitNotification(value) {
+    document.querySelector("#rate-limit-notification").classList.toggle("hidden", !value);
+}
+
 //  Advanced Blacklist
 
 /**
