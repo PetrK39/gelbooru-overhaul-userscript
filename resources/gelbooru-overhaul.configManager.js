@@ -280,6 +280,11 @@ class ConfigManager {
             post: {
                 name: "Post Page",
                 items: {
+                    artistDetector: {
+                        value: true,
+                        name: "Artist Detector",
+                        description: "Try to predict artist tag"
+                    },
                     center: {
                         value: true,
                         name: "Center Content",

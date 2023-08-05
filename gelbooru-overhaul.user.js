@@ -59,6 +59,7 @@
         configManager.addUpdateListener("collapsibleSidebar.color", applyCssSidebarColor);
         configManager.addUpdateListener("collapsibleSidebar.opacity", applyCssSidebarOpacity);
 
+        configManager.addUpdateListener("post.artistDetector", applyTweakArtistDetector);
         configManager.addUpdateListener("post.center", applyTweakPostCenter);
         configManager.addUpdateListener("post.fitTweaks", applyTweakPostFit);
         configManager.addUpdateListener("post.fitHorizontallyOnNarrow", applyTweakPostOnNarrow);

@@ -185,6 +185,62 @@ function applyTweakCollapseSidebar(value) {
  * @type {PreferenceUpdateCallback}
  * @param {boolean} value 
  */
+function applyTweakArtistDetector(value) {
+    if (context.pageType != utils.pageTypes.POST) return;
+    utils.debugLog(`Applying ArtistDetector state: ${String(value)}`);
+
+    let tagList = document.querySelector("#tag-list");
+
+    switch (value) {
+        case true:
+            if (tagList.querySelector("b").textContent == "Artist") break;
+
+            let tags = {};
+            
+            let generalTagNames = Object.values(document.querySelectorAll(".tag-type-general a:nth-child(2)")).map(i => i.textContent);
+            let generalTagCounts = Object.values(document.querySelectorAll(".tag-type-general span:nth-child(3)")).map(i => Number(i.textContent));
+            
+            generalTagNames.forEach((name, i) => tags[name] = generalTagCounts[i]);
+
+            var lowestCount = Math.min.apply(null, generalTagNames.map(function (x) { return tags[x] }));
+            var lowestTag = generalTagNames.filter(function (y) { return tags[y] === lowestCount });
+
+            let span = document.createElement('span');
+            span.setAttribute('class', 'sm-hidden go-sm-unhidden');
+            span.innerHTML = `
+                <li style="margin-top: 10px;">
+                    <b>Artist?</b>
+                </li>
+            `;
+
+            
+            let li = document.createElement("li");
+            li.classList.add("tag-type-artist");
+            li.innerHTML = `
+            <span class="sm-hidden go-sm-unhidden">
+                <a href="index.php?page=wiki&amp;s=list&amp;search=${lowestTag}">?</a> 
+            </span>
+            <a href="index.php?page=post&amp;s=list&amp;tags=${lowestTag}">${lowestTag}</a>
+            <span style="color: #a0a0a0;">${lowestCount}</span>
+            `;
+            
+            tagList.insertBefore(li, tagList.firstChild);
+            tagList.insertBefore(span, tagList.firstChild);
+
+            break;
+        case false:
+            if (tagList.querySelector("b").textContent != "Artist?") break;
+
+            tagList.removeChild(tagList1.firstChild);
+            tagList.removeChild(tagList1.firstChild);
+            break;
+    }
+}
+
+/**
+ * @type {PreferenceUpdateCallback}
+ * @param {boolean} value 
+ */
 function applyTweakPostFit(value) {
     if (context.pageType != utils.pageTypes.POST) return;
     utils.debugLog(`Applying PostFit state: ${String(value)}`);
