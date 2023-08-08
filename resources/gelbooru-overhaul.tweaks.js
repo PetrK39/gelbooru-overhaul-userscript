@@ -203,7 +203,7 @@ function applyTweakArtistDetector(value) {
             generalTagNames.forEach((name, i) => tags[name] = generalTagCounts[i]);
 
             var lowestCount = Math.min.apply(null, generalTagNames.map(function (x) { return tags[x] }));
-            var lowestTag = generalTagNames.filter(function (y) { return tags[y] === lowestCount });
+            var lowestTag = generalTagNames.filter(function (y) { return tags[y] === lowestCount })[0];
 
             let span = document.createElement('span');
             span.setAttribute('class', 'sm-hidden go-sm-unhidden');
@@ -218,9 +218,9 @@ function applyTweakArtistDetector(value) {
             li.classList.add("tag-type-artist");
             li.innerHTML = `
             <span class="sm-hidden go-sm-unhidden">
-                <a href="index.php?page=wiki&amp;s=list&amp;search=${lowestTag}">?</a> 
+                <a href="index.php?page=wiki&amp;s=list&amp;search=${lowestTag.replaceAll(" ", "_")}">?</a> 
             </span>
-            <a href="index.php?page=post&amp;s=list&amp;tags=${lowestTag}">${lowestTag}</a>
+            <a href="index.php?page=post&amp;s=list&amp;tags=${lowestTag.replaceAll(" ", "_") }">${lowestTag}</a>
             <span style="color: #a0a0a0;">${lowestCount}</span>
             `;
             
